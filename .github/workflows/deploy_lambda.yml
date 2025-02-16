@@ -22,7 +22,9 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install boto3 pandas numpy -t .
+          pip install boto3 pandas numpy -t package/
+          cp lambda_function.py package/
+          cd package && zip -r ../function.zip .
 
       - name: Package Lambda
         run: |
