@@ -58,10 +58,14 @@ jobs:
 
       - name: Ensure Lambda Runtime is Python 3.11
         run: |
+          echo "Waiting for previous updates to complete..."
+          sleep 30  # Adjust if needed
           aws lambda update-function-configuration --function-name EkimetricsDataProcessing --runtime python3.11 --region us-east-1
 
       - name: Add S3 Trigger to Lambda
         run: |
+          echo "Waiting for previous updates to complete..."
+          sleep 30  # Adjust if needed
           set -e
           if ! aws lambda get-policy --function-name EkimetricsDataProcessing | grep -q s3-trigger; then
             aws lambda add-permission \
