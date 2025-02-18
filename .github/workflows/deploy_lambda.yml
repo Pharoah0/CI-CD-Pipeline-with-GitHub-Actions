@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -20,21 +20,23 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          mkdir package
           pip install boto3 pandas numpy -t package/
           cp lambda_function.py package/
           cd package && zip -r ../function.zip .
 
-      - name: Package Lambda
-        run: |
-          zip -r function.zip lambda_function.py boto3 pandas numpy
+      - name: Check if Lambda Exists
+        id: check_lambda
+        continue-on-error: true
+        run: aws lambda get-function --function-name EkimetricsDataProcessing
 
-      - name: Create Lambda Function (if it doesn't exist)
+      - name: Create Lambda Function
+        if: steps.check_lambda.outcome == 'failure'
         run: |
-          aws lambda get-function --function-name EkimetricsDataProcessing || \
           aws lambda create-function --function-name EkimetricsDataProcessing \
-          --runtime python3.11 --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_LAMBDA_ROLE }} \
-          --handler lambda_function.lambda_handler --zip-file fileb://function.zip \
-          --region us-east-1
+            --runtime python3.11 --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_LAMBDA_ROLE }} \
+            --handler lambda_function.lambda_handler --zip-file fileb://function.zip \
+            --region us-east-1
 
       - name: Deploy Lambda Function Code
         run: |
@@ -46,14 +48,17 @@ jobs:
 
       - name: Add S3 Trigger to Lambda
         run: |
-          aws lambda add-permission \
-            --function-name EkimetricsDataProcessing \
-            --statement-id s3-trigger \
-            --action "lambda:InvokeFunction" \
-            --principal s3.amazonaws.com \
-            --source-arn arn:aws:s3:::${{ secrets.AWS_S3_BUCKET }} \
-            --source-account ${{ secrets.AWS_ACCOUNT_ID }} \
-            --region us-east-1
+          set -e
+          if ! aws lambda get-policy --function-name EkimetricsDataProcessing | grep -q s3-trigger; then
+            aws lambda add-permission \
+              --function-name EkimetricsDataProcessing \
+              --statement-id s3-trigger \
+              --action "lambda:InvokeFunction" \
+              --principal s3.amazonaws.com \
+              --source-arn arn:aws:s3:::${{ secrets.AWS_S3_BUCKET }} \
+              --source-account ${{ secrets.AWS_ACCOUNT_ID }} \
+              --region us-east-1
+          fi
 
           aws s3api put-bucket-notification-configuration \
             --bucket ${{ secrets.AWS_S3_BUCKET }} \
