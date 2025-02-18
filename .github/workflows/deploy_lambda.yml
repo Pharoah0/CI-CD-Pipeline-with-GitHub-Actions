@@ -35,7 +35,8 @@ jobs:
         run: |
           aws lambda create-function --function-name EkimetricsDataProcessing \
             --runtime python3.11 --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_LAMBDA_ROLE }} \
-            --handler lambda_function.lambda_handler --zip-file fileb://function.zip \
+            --handler lambda_function.lambda_handler \
+            --code "ZipFile=fileb://function.zip" \
             --region us-east-1
 
       - name: Deploy Lambda Function Code
