@@ -21,7 +21,7 @@ jobs:
       - name: Install Dependencies and Publish Layer
         run: |
           mkdir python
-          pip install boto3 pandas numpy -t python/
+          pip install --no-cache-dir pandas numpy -t python/
           zip -r layer.zip python
           LAYER_VERSION=$(aws lambda publish-layer-version --layer-name PandasNumpyLayer \
             --zip-file fileb://layer.zip \
