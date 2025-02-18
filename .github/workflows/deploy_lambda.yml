@@ -25,8 +25,9 @@ jobs:
           cp lambda/lambda_function.py package/
           cd package && zip -r ../function.zip .
 
-      - name: Debug - Check if function.zip exists
-        run: ls -lah function.zip
+      - name: Upload Lambda Package to S3
+        run: |
+          aws s3 cp function.zip s3://${{ secrets.AWS_S3_BUCKET }}/function.zip
 
       - name: Check if Lambda Exists
         id: check_lambda
@@ -40,8 +41,9 @@ jobs:
             --runtime python3.11 \
             --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_LAMBDA_ROLE }} \
             --handler lambda_function.lambda_handler \
-            --zip-file fileb://function.zip \
+            --code "S3Bucket=${{ secrets.AWS_S3_BUCKET }},S3Key=function.zip" \
             --region us-east-1
+            --debug
 
       - name: Deploy Lambda Function Code
         run: |
