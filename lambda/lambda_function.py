@@ -1,7 +1,15 @@
+import boto3
+import os
+import sys
+import io
+import zipfile
+
 S3_BUCKET = os.getenv("S3_BUCKET_NAME", "pe-ekimetrics-ad-campaign-data")
 DEPENDENCY_KEY = "dependencies.zip"
 DOWNLOAD_PATH = "/tmp/dependencies.zip"
 EXTRACT_PATH = "/tmp/python"
+
+s3 = boto3.client("s3")
 
 def download_dependencies():
     """Download and extract dependencies from S3 if not already extracted."""
@@ -16,13 +24,6 @@ def download_dependencies():
 
 download_dependencies()
 
-s3 = boto3.client("s3")
-
-import boto3
-import os
-import sys
-import io
-import zipfile
 import numpy as np
 import pandas as pd
 
