@@ -18,25 +18,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Install Dependencies and Publish Layer
+      - name: Upload Dependencies to S3
         run: |
           mkdir python
           pip install --no-cache-dir pandas numpy -t python/
-          zip -r layer.zip python
-          LAYER_VERSION=$(aws lambda publish-layer-version --layer-name PandasNumpyLayer \
-            --zip-file fileb://layer.zip \
-            --compatible-runtimes python3.11 \
-            --query Version --output text)
-          if [[ -z "$LAYER_VERSION" ]]; then
-              echo "Error: Layer version not retrieved!" >&2
-              exit 1
-          fi
-          echo "LAYER_VERSION=$LAYER_VERSION" >> $GITHUB_ENV
+          cd python && zip -r ../dependencies.zip . && cd ..
+          aws s3 cp dependencies.zip s3://${{ secrets.AWS_S3_BUCKET }}/dependencies.zip
 
-      - name: Install Function
+      - name: Package Lambda Function
         run: |
           mkdir function
-          cp lambda/lambda_function.py function/ && cd function && zip -r ../function.zip .
+          cp lambda/lambda_function.py function/
+          cd function && zip -r ../function.zip . && cd ..
 
       - name: Upload Lambda Package to S3
         run: |
@@ -55,21 +48,9 @@ jobs:
             --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_LAMBDA_ROLE }} \
             --handler lambda_function.lambda_handler \
             --code "S3Bucket=${{ secrets.AWS_S3_BUCKET }},S3Key=function.zip" \
-            --layers arn:aws:lambda:us-east-1:${{ secrets.AWS_ACCOUNT_ID }}:layer:PandasNumpyLayer:${{ env.LAYER_VERSION }} \
+            --environment "Variables={S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET }}}" \
             --region us-east-1 \
             --debug
-
-      - name: Ensure Lambda Uses the Latest Layer
-        run: |
-          LATEST_LAYER=$(aws lambda list-layer-versions --layer-name PandasNumpyLayer \
-            --query 'LayerVersions[0].LayerVersionArn' --output text)
-          if [[ -z "$LATEST_LAYER" ]]; then
-              echo "Error: Failed to retrieve latest layer version." >&2
-              exit 1
-          fi
-          aws lambda update-function-configuration --function-name EkimetricsDataProcessing \
-            --layers $LATEST_LAYER \
-            --region us-east-1
 
       - name: Deploy Lambda Function Code
         run: |
