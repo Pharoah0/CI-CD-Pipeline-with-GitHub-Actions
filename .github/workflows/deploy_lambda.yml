@@ -22,7 +22,7 @@ jobs:
         run: |
           mkdir package
           pip install boto3 pandas numpy -t package/
-          cp lambda_function.py package/
+          cp lambda/lambda_function.py package/
           cd package && zip -r ../function.zip .
 
       - name: Check if Lambda Exists
