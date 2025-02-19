@@ -21,11 +21,19 @@ jobs:
       - name: Build and Publish Dependencies Layer
         run: |
           mkdir -p layer/python
-          # Use a Docker container to build packages for Amazon Linux
+          # Use a Docker container to build packages in an Amazon Linux environment for Python 3.11.
           docker run --rm -v "$(pwd)/layer/python":/var/task/python public.ecr.aws/sam/build-python3.11 \
             pip install --no-cache-dir --only-binary=:all: pandas numpy -t /var/task/python
-          cd layer && zip -r ../layer.zip .
-          aws lambda publish-layer-version --layer-name PandasNumpyLayer --zip-file fileb://layer.zip --compatible-runtimes python3.11
+          echo "Contents of layer/python after installation:"
+          ls -la layer/python
+
+          # Create the zip file using an absolute path
+          cd layer && zip -r "${{ github.workspace }}/layer.zip" . && cd ..
+          echo "Listing root directory contents after zipping:"
+          ls -la
+
+          # Publish the layer
+          aws lambda publish-layer-version --layer-name PandasNumpyLayer --zip-file fileb://"${{ github.workspace }}/layer.zip" --compatible-runtimes python3.11
 
       - name: Package Lambda Function
         run: |
