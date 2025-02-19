@@ -20,11 +20,12 @@ jobs:
 
       - name: Build and Publish Dependencies Layer
         run: |
+          sudo apt-get update && sudo apt-get install -y zip
           mkdir -p python
           pip install --no-cache-dir --only-binary=:all: pandas numpy -t python/
-          zip -r layer.zip python
-          echo "Absolute path of layer.zip: $(pwd)/layer.zip"
-          ls -l "$(pwd)"
+          ls -la python
+          cd python && zip -r ../layer.zip . && cd ..
+          ls -la  # Verify layer.zip is in the current directory
           aws lambda publish-layer-version --layer-name PandasNumpyLayer --zip-file fileb://$(pwd)/layer.zip --compatible-runtimes python3.11
 
       - name: Package Lambda Function
