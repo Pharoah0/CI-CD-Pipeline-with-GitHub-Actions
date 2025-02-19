@@ -18,14 +18,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Upload Dependencies to S3
+      - name: Build and Publish Dependencies Layer
         run: |
-          mkdir -p python
-          # Use a Docker container that mimics the AWS Lambda build environment for Python 3.11.
-          docker run --rm -v "$(pwd)/python":/var/task/python public.ecr.aws/sam/build-python3.11 \
+          mkdir -p layer/python
+          # Use a Docker container to build packages for Amazon Linux
+          docker run --rm -v "$(pwd)/layer/python":/var/task/python public.ecr.aws/sam/build-python3.11 \
             pip install --no-cache-dir --only-binary=:all: pandas numpy -t /var/task/python
-          cd python && zip -r ../dependencies.zip . && cd ..
-          aws s3 cp dependencies.zip s3://${{ secrets.AWS_S3_BUCKET }}/dependencies.zip
+          cd layer && zip -r ../layer.zip .
+          aws lambda publish-layer-version --layer-name PandasNumpyLayer --zip-file fileb://layer.zip --compatible-runtimes python3.11
 
       - name: Package Lambda Function
         run: |
@@ -45,14 +45,15 @@ jobs:
       - name: Create Lambda Function
         if: steps.check_lambda.outcome == 'failure'
         run: |
+          LAYER_VERSION=$(aws lambda publish-layer-version --layer-name PandasNumpyLayer --zip-file fileb://layer.zip --compatible-runtimes python3.11 --query 'Version' --output text)
           aws lambda create-function --function-name EkimetricsDataProcessing \
             --runtime python3.11 \
             --role arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_LAMBDA_ROLE }} \
             --handler lambda_function.lambda_handler \
             --code "S3Bucket=${{ secrets.AWS_S3_BUCKET }},S3Key=function.zip" \
             --environment "Variables={S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET }}}" \
-            --region us-east-1 \
-            --debug
+            --layers arn:aws:lambda:us-east-1:${{ secrets.AWS_ACCOUNT_ID }}:layer:PandasNumpyLayer:$LAYER_VERSION \
+            --region us-east-1
 
       - name: Wait for Lambda Function to Become Active
         run: |
