@@ -52,6 +52,24 @@ jobs:
             --region us-east-1 \
             --debug
 
+      - name: Wait for Lambda Function to Become Active
+        run: |
+          RETRY=10
+          while [ $RETRY -gt 0 ]; do
+            STATE=$(aws lambda get-function-configuration --function-name EkimetricsDataProcessing --query 'State' --output text --region us-east-1)
+            if [ "$STATE" = "Active" ]; then
+              echo "Lambda function is Active."
+              break
+            fi
+            echo "Lambda function state: $STATE. Waiting 10 seconds..."
+            sleep 10
+            RETRY=$((RETRY-1))
+          done
+          if [ "$STATE" != "Active" ]; then
+            echo "Lambda function did not become Active in time."
+            exit 1
+          fi
+
       - name: Deploy Lambda Function Code
         run: |
           aws lambda update-function-code --function-name EkimetricsDataProcessing --zip-file fileb://function.zip --region us-east-1
