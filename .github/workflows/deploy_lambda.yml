@@ -20,8 +20,10 @@ jobs:
 
       - name: Upload Dependencies to S3
         run: |
-          mkdir python
-          pip install --no-cache-dir --only-binary=:all: pandas numpy -t python/
+          mkdir -p python
+          # Use a Docker container that mimics the AWS Lambda build environment for Python 3.11.
+          docker run --rm -v "$(pwd)/python":/var/task/python public.ecr.aws/sam/build-python3.11 \
+            pip install --no-cache-dir --only-binary=:all: pandas numpy -t /var/task/python
           cd python && zip -r ../dependencies.zip . && cd ..
           aws s3 cp dependencies.zip s3://${{ secrets.AWS_S3_BUCKET }}/dependencies.zip
 
