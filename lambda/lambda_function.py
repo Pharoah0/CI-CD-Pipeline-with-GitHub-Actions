@@ -12,18 +12,28 @@ EXTRACT_PATH = "/tmp/python"
 s3 = boto3.client("s3")
 
 def download_dependencies():
-    """Download and extract dependencies from S3 if not already extracted."""
+    """
+    Download and extract dependencies from S3 if not already extracted.
+    Always add the extraction folder to sys.path.
+    """
     if not os.path.exists(EXTRACT_PATH):
+        print("Dependencies not found in /tmp. Downloading and extracting...")
         s3 = boto3.client("s3")
         s3.download_file(S3_BUCKET, DEPENDENCY_KEY, DOWNLOAD_PATH)
-
         with zipfile.ZipFile(DOWNLOAD_PATH, "r") as zip_ref:
             zip_ref.extractall(EXTRACT_PATH)
-
+        print("Extracted dependencies:", os.listdir(EXTRACT_PATH))
+    else:
+        print("Dependencies already exist in /tmp.")
+    
+    if EXTRACT_PATH not in sys.path:
         sys.path.append(EXTRACT_PATH)
+        print("Added {} to sys.path".format(EXTRACT_PATH))
 
+# Download dependencies before importing numpy and pandas
 download_dependencies()
 
+# Now import third-party libraries
 import numpy as np
 import pandas as pd
 
