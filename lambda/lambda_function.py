@@ -3,13 +3,9 @@ import pandas as pd
 import boto3
 import os
 import io
+import zipfile
 
-S3_BUCKET = os.getenv("S3_BUCKET_NAME", "pe-ekimetrics-ad-campaign-data")
-DEPENDENCY_KEY = "dependencies.zip"
-DOWNLOAD_PATH = "/tmp/dependencies.zip"
-EXTRACT_PATH = "/tmp/python"
-
-s3 = boto3.client("s3")
+# (Remove the download_dependencies() function and related code)
 
 # Standardized platform names
 platform_corrections = {
@@ -17,6 +13,9 @@ platform_corrections = {
     "Gooogle Ads": "Google Ads",
     "Tik-Tok": "TikTok"
 }
+
+s3 = boto3.client("s3")
+S3_BUCKET = os.getenv("S3_BUCKET_NAME", "pe-ekimetrics-ad-campaign-data")
 
 def get_latest_file(prefix="raw/"):
     """Fetch the latest file from the raw S3 bucket."""

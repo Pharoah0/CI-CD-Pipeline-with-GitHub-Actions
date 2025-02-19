@@ -22,12 +22,11 @@ jobs:
         run: |
           mkdir python
           pip install --no-cache-dir pandas numpy -t python/
-          cd python && zip -r ../dependencies.zip . && cd ..
+          zip -r dependencies.zip python
           aws s3 cp dependencies.zip s3://${{ secrets.AWS_S3_BUCKET }}/dependencies.zip
 
       - name: Publish Dependencies Layer from S3
         run: |
-          # This command tells Lambda to create a layer from the dependencies.zip file already in S3.
           LAYER_VERSION=$(aws lambda publish-layer-version \
             --layer-name PandasNumpyLayer \
             --content "S3Bucket=${{ secrets.AWS_S3_BUCKET }},S3Key=dependencies.zip" \
