@@ -27,7 +27,7 @@ jobs:
 
       - name: Publish Dependencies Layer from S3
         run: |
-          # Use the S3-hosted dependencies.zip as the content for the Lambda layer.
+          # This command tells Lambda to create a layer from the dependencies.zip file already in S3.
           LAYER_VERSION=$(aws lambda publish-layer-version \
             --layer-name PandasNumpyLayer \
             --content "S3Bucket=${{ secrets.AWS_S3_BUCKET }},S3Key=dependencies.zip" \
