@@ -18,15 +18,28 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Upload Dependencies to S3
+      - name: Build and Publish Dependencies Layer
         run: |
-          mkdir python
-          pip install --no-cache-dir pandas numpy -t python/
-          zip -r dependencies.zip python
+          # Create a folder for the layer with the correct structure.
+          mkdir -p layer/python
+
+          # Use Docker with the AWS SAM build image for Python 3.11 to install dependencies.
+          docker run --rm -v "$(pwd)/layer/python":/var/task/python public.ecr.aws/sam/build-python3.11 \
+            pip install --no-cache-dir --only-binary=:all: pandas numpy -t /var/task/python
+
+          # Debug: list contents to verify installation.
+          echo "Contents of layer/python after installation:"
+          ls -la layer/python
+
+          # Zip the folder so that the ZIP file has a top-level "python" directory.
+          cd layer && zip -r ../dependencies.zip python && cd ..
+          echo "Listing contents of dependencies.zip:"
+          unzip -l dependencies.zip
+
+          # Upload the dependencies ZIP to S3.
           aws s3 cp dependencies.zip s3://${{ secrets.AWS_S3_BUCKET }}/dependencies.zip
 
-      - name: Publish Dependencies Layer from S3
-        run: |
+          # Publish the layer using the S3-hosted ZIP file.
           LAYER_VERSION=$(aws lambda publish-layer-version \
             --layer-name PandasNumpyLayer \
             --content "S3Bucket=${{ secrets.AWS_S3_BUCKET }},S3Key=dependencies.zip" \
