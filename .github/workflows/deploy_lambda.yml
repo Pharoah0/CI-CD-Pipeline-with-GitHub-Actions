@@ -20,11 +20,18 @@ jobs:
 
       - name: Build and Publish Dependencies Layer
         run: |
+          # Create the directory for dependencies and install packages into it.
           mkdir -p python
           pip install --no-cache-dir --only-binary=:all: pandas numpy -t python/
-          # Zip the entire 'python' folder so the zip has a top-level "python" directory.
-          zip -r dependencies.zip python
-          aws lambda publish-layer-version --layer-name PandasNumpyLayer --zip-file fileb://dependencies.zip --compatible-runtimes python3.11
+
+          # Create a zip file that contains the entire "python" directory.
+          zip -r layer.zip python
+
+          # List the files in the current directory to verify layer.zip exists.
+          ls -l
+
+          # Publish the layer using the zip file.
+          aws lambda publish-layer-version --layer-name PandasNumpyLayer --zip-file fileb://layer.zip --compatible-runtimes python3.11
 
       - name: Package Lambda Function
         run: |
