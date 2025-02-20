@@ -3,9 +3,6 @@ import pandas as pd
 import boto3
 import os
 import io
-import zipfile
-
-# (Remove the download_dependencies() function and related code)
 
 # Standardized platform names
 platform_corrections = {
@@ -31,37 +28,51 @@ def lambda_handler(event, context):
         return {"status": "No new data found"}
 
     print(f"Processing file: {latest_file}")
-
-    # Read file from S3
     obj = s3.get_object(Bucket=S3_BUCKET, Key=latest_file)
-    df = pd.read_csv(io.BytesIO(obj["Body"].read()), dtype={
-        "campaign_id": str,
-        "platform": str,
-        "date": str,
-        "impressions": "Int64",
-        "clicks": "Int64",
-        "spend": float,
-        "conversions": "Int64"
-    })
-
-    # Drop duplicates & clean data
-    df.drop_duplicates(inplace=True)
-    df["platform"] = df["platform"].replace(platform_corrections)
-    df["clicks"].fillna(df["clicks"].median(), inplace=True)
-    df["conversions"].fillna(0, inplace=True)
-    df.dropna(subset=["campaign_id", "date"], inplace=True)
-
-    # Feature Engineering
-    df["CTR"] = (df["clicks"] / df["impressions"]).fillna(0)
-    df["ROI"] = (df["conversions"] / df["spend"]).replace([np.inf, -np.inf], 0).fillna(0)
-
-    # Save processed data
+    
+    # Choose a chunk size that balances speed and memory usage.
+    chunk_size = 1000000  # 1,000,000 rows per chunk
+    total_records = 0
+    part_num = 1
     timestamp = latest_file.split("_")[-1].replace(".csv", "")
-    processed_file_key = f"processed/ad_campaign_data_{timestamp}.csv"
+    
+    # Process and upload each chunk separately.
+    for chunk in pd.read_csv(
+        obj["Body"],
+        dtype={
+            "campaign_id": str,
+            "platform": str,
+            "date": str,
+            "impressions": "Int64",
+            "clicks": "Int64",
+            "spend": float,
+            "conversions": "Int64"
+        },
+        chunksize=chunk_size
+    ):
+        # Process the chunk:
+        chunk.drop_duplicates(inplace=True)
+        chunk["platform"] = chunk["platform"].replace(platform_corrections)
+        # Use assignment to avoid chained warnings:
+        chunk["clicks"] = chunk["clicks"].fillna(chunk["clicks"].median())
+        chunk["conversions"] = chunk["conversions"].fillna(0)
+        chunk = chunk.dropna(subset=["campaign_id", "date"])
+        chunk["CTR"] = (chunk["clicks"] / chunk["impressions"]).fillna(0)
+        chunk["ROI"] = (chunk["conversions"] / chunk["spend"]).replace([np.inf, -np.inf], 0).fillna(0)
+        
+        records = len(chunk)
+        total_records += records
 
-    csv_buffer = io.StringIO()
-    df.to_csv(csv_buffer, index=False)
-    s3.put_object(Bucket=S3_BUCKET, Key=processed_file_key, Body=csv_buffer.getvalue())
+        # Convert the chunk to CSV string.
+        # Write header for the first part only.
+        csv_data = chunk.to_csv(index=False, header=(part_num == 1))
+        
+        # Define the S3 key for this part.
+        key = f"processed/ad_campaign_data_{timestamp}_part{part_num}.csv"
+        s3.put_object(Bucket=S3_BUCKET, Key=key, Body=csv_data)
+        print(f"Uploaded chunk part {part_num} with {records} records.")
+        
+        part_num += 1
 
-    print(f"Processed file saved as: {processed_file_key}")
-    return {"status": "Success", "processed_records": len(df)}
+    print(f"Processing complete. Total records processed: {total_records} in {part_num - 1} parts.")
+    return {"status": "Success", "processed_records": total_records, "parts": part_num - 1}
