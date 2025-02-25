@@ -1,5 +1,10 @@
 # **Automating Data Pipeline Deployment with CI/CD & AWS Lambda**
 
+Author: Pharoah Evelyn
+
+<p align="center">
+    <img src=https://github.com/Pharoah0/CI-CD-Pipeline-with-GitHub-Actions/blob/main/images/Main.png/>
+</p>
 ### **Overview**
 
 In digital advertising, businesses need real-time insights into campaign performance across multiple platforms. However, managing data ingestion, transformation, and deployment at scale can be a bottleneck, leading to inefficiencies and delayed decision-making.
@@ -62,14 +67,12 @@ By implementing CI/CD automation, the data engineering team achieved:
 
 ---
 
-### **Data Visualization (if Possible)**
+### **Key Improvements**
 
-A potential visualization could include:
+Here are a few notable outcomes achieved by implementing this pipeline:
 
-- **Deployment Time Comparison**:
-  - Before CI/CD: **30+ mins**
-  - After CI/CD: **< 4 mins**
-- **Data Accuracy Improvement** (before/after standardization of platform names).
+- **Deployment Time**: Reduced from **30+ minutes** (manual) to **under 4 minutes** (automated via CI/CD).
+- **Data Accuracy**: Corrected mis-labeled or missing data and standardized platform names, leading to more reliable analytics.
 
 ---
 
