@@ -5,6 +5,7 @@ Author: Pharoah Evelyn
 <p align="center">
     <img src=https://github.com/Pharoah0/CI-CD-Pipeline-with-GitHub-Actions/blob/main/images/Main.svg>
 </p>
+
 ### **Overview**
 
 In digital advertising, businesses need real-time insights into campaign performance across multiple platforms. However, managing data ingestion, transformation, and deployment at scale can be a bottleneck, leading to inefficiencies and delayed decision-making.
@@ -93,6 +94,10 @@ This approach enhances **DevOps efficiency** and enables **scalable and maintain
 
 - Implement **unit tests** for the Lambda function to validate transformations before deployment.
 - Extend CI/CD to **monitor execution logs** and alert failures via AWS CloudWatch & SNS.
+<p align="center">
+    <img src=https://github.com/Pharoah0/CI-CD-Pipeline-with-GitHub-Actions/blob/main/images/Diagram1.svg>
+</p>
+
 - Introduce **step functions** for orchestrating multi-step data transformations.
 - Explore **containerized Lambda deployment** for even more flexibility.
 
