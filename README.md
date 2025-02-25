@@ -3,7 +3,7 @@
 Author: Pharoah Evelyn
 
 <p align="center">
-    <img src=https://github.com/Pharoah0/CI-CD-Pipeline-with-GitHub-Actions/blob/main/images/Main.png/>
+    <img src=https://github.com/Pharoah0/CI-CD-Pipeline-with-GitHub-Actions/blob/main/images/Main.svg>
 </p>
 ### **Overview**
 
