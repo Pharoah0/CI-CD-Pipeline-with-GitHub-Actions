@@ -100,6 +100,9 @@ This approach enhances **DevOps efficiency** and enables **scalable and maintain
 
 - Introduce **step functions** for orchestrating multi-step data transformations.
 - Explore **containerized Lambda deployment** for even more flexibility.
+<p align="center">
+    <img src=https://github.com/Pharoah0/CI-CD-Pipeline-with-GitHub-Actions/blob/main/images/Diagram2.svg>
+</p>
 
 ---
 
