@@ -3,8 +3,8 @@ set -e
 
 # Configuration parameters (update these as needed)
 AWS_REGION="us-east-1"
-LAMBDA_NAME="EkimetricsDataProcessing"
-S3_BUCKET="pe-ekimetrics-ad-campaign-data"
+LAMBDA_NAME="DataTransformationLambda"
+S3_BUCKET="my_s3_bucket"
 # Replace with your account ID and the latest layer version
 LAYER_ARN="arn:aws:lambda:us-east-1:<ACCOUNT_ID>:layer:PandasNumpyLayer:<LAYER_VERSION>"
 

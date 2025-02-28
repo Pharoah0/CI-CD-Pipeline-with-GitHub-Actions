@@ -12,7 +12,7 @@ platform_corrections = {
 }
 
 s3 = boto3.client("s3")
-S3_BUCKET = os.getenv("S3_BUCKET_NAME", "pe-ekimetrics-ad-campaign-data")
+S3_BUCKET = os.getenv("S3_BUCKET_NAME", "my_s3_bucket")
 
 def get_latest_file(prefix="raw/"):
     """Fetch the latest file from the raw S3 bucket."""
